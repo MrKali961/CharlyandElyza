@@ -39,6 +39,8 @@ const Home = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(true);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPlayButton, setShowPlayButton] = useState(false);
+  const [mediaPlaying, setMediaPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handlePasswordSubmit = () => {
@@ -207,8 +209,10 @@ export default function WeddingRSVPWebsite() {
   const audioRef = useRef<HTMLAudioElement>(null); // ADD audioRef here
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true); // New state for initial loading screen
-  const [hasStarted, setHasStarted] = useState(false)
-  const [isScrollLocked, setIsScrollLocked] = useState(true)
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isScrollLocked, setIsScrollLocked] = useState(true);
+  const [showPlayButton, setShowPlayButton] = useState(false);
+  const [mediaPlaying, setMediaPlaying] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -235,8 +239,23 @@ export default function WeddingRSVPWebsite() {
       return link;
     };
 
+    const preloadAudio = () => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'audio';
+      link.href = '/backgroundsound.mp3';
+      link.type = 'audio/mpeg';
+      document.head.appendChild(link);
+      return link;
+    };
+
     const mp4Preload = preloadVideoLink('/charlyandelyzasavethedate.mp4', 'video/mp4');
     const webmPreload = preloadVideoLink('/charlyandelyzasavethedate.webm', 'video/webm');
+    const audioPreload = preloadAudio();
+
+    // Create and start loading the audio element early
+    const audioElement = new Audio('/backgroundsound.mp3');
+    audioElement.load(); // Start loading audio in background
 
     return () => {
       // Cleanup preload links on component unmount
@@ -246,16 +265,32 @@ export default function WeddingRSVPWebsite() {
       if (webmPreload && webmPreload.parentNode) {
         document.head.removeChild(webmPreload);
       }
+      if (audioPreload && audioPreload.parentNode) {
+        document.head.removeChild(audioPreload);
+      }
     };
   }, []); // Empty dependency array ensures this runs only once on mount
 
+  const handlePlayMedia = () => {
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
+        setMediaPlaying(true);
+      }).catch(error => {
+        console.error("Audio play failed:", error);
+      });
+    }
+  }
+
   const handleStart = () => {
-    setIsScrollLocked(false)
-    setHasStarted(true)
+    setIsScrollLocked(false);
+    setHasStarted(true);
+
+    // Play audio when the user starts the experience
+    handlePlayMedia();
 
     setTimeout(() => {
-      mainContentRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 800)
+      mainContentRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 800);
   }
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -340,7 +375,7 @@ export default function WeddingRSVPWebsite() {
     };
   }, [isLoading, videoRef]); // <-- CHANGE DEPENDENCY ARRAY to [isLoading, videoRef]
 
-  // ADD useEffect for audio playback in WeddingRSVPWebsite
+  // MODIFY the existing audio playback useEffect to only setup the audio but not play it automatically
   useEffect(() => {
     if (isVideoReady && !isInitialLoading && audioRef.current) {
       const audio = audioRef.current;
@@ -348,19 +383,13 @@ export default function WeddingRSVPWebsite() {
       const handleCanPlayThrough = () => {
         console.log("Audio loaded successfully and can play through (WeddingRSVPWebsite).");
         audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+        setShowPlayButton(true); // Show play button when audio is ready
       };
       audio.addEventListener('canplaythrough', handleCanPlayThrough);
 
-      // Attempt to play the audio
-      audio.play().catch(error => {
-        console.error("Audio play prevented (WeddingRSVPWebsite):", error);
-        // Potentially inform the user or provide a manual play button if autoplay is commonly blocked.
-      });
+      // We don't auto-play here anymore, instead we'll show a play button
+      // that requires user interaction before playing
     }
-    // Optional: Add pause logic if audio should stop under certain conditions
-    // else if (audioRef.current && !audioRef.current.paused) {
-    //   audioRef.current.pause();
-    // }
   }, [isVideoReady, isInitialLoading]); // Play when video is ready and initial loading is done
 
   useEffect(() => {
@@ -497,6 +526,42 @@ export default function WeddingRSVPWebsite() {
     }
   }, [isLoading]);
 
+  // Further optimize audio loading by creating and preparing it in an earlier phase
+  useEffect(() => {
+    // Create audio element during initialization to start loading earlier
+    const backgroundAudio = new Audio('/backgroundsound.mp3');
+    backgroundAudio.preload = 'auto'; // Force preloading
+    backgroundAudio.load(); // Start loading immediately
+
+    // Store reference to be used later when we need to play it
+    if (audioRef.current === null) {
+      audioRef.current = backgroundAudio;
+    }
+
+    // Setup audio properties
+    backgroundAudio.loop = true;
+    backgroundAudio.volume = 0.6; // Set volume to 60% for better user experience
+
+    // Attempt to prefetch using fetch API for better caching
+    fetch('/backgroundsound.mp3')
+      .then(response => response.blob())
+      .then(blob => {
+        // Audio is now in browser cache
+        console.log('Audio file prefetched successfully');
+      })
+      .catch(error => {
+        console.warn('Audio prefetch failed, will still use normal loading', error);
+      });
+
+    return () => {
+      // Cleanup
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div
@@ -520,7 +585,6 @@ export default function WeddingRSVPWebsite() {
 
   return (
       <div className="relative min-h-screen overflow-x-hidden font-serif text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
-        <audio ref={audioRef} src="/backgroundsound.mp3" loop /> {/* ADD audio tag here */}
         {/* Initial Loading Screen */}
         {isInitialLoading && (
           <div
