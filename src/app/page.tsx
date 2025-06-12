@@ -74,15 +74,6 @@ const Home = () => {
         });
       }
     }
-    // Optional: If you want to pause media when content is hidden, you can add an 'else' block:
-    // else {
-    //   if (videoRef.current && !videoRef.current.paused) {
-    //     videoRef.current.pause();
-    //   }
-    //   if (audioRef.current && !audioRef.current.paused) {
-    //     audioRef.current.pause();
-    //   }
-    // }
   }, [showContent]); // This effect runs when 'showContent' changes.
 
   // Scroll down functionality
@@ -95,45 +86,45 @@ const Home = () => {
 
   // JSX for the component
   return (
-    <div className="relative min-h-screen bg-black text-white">
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              Enter Password
-            </h2>
-            {error && (
-              <p className="text-red-500 text-sm mb-4 text-center">
-                {error}
-              </p>
-            )}
-            <div className="mb-4">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gold-texture"
-                placeholder="Password"
-              />
+      <div className="relative min-h-screen bg-black text-white">
+        {/* Password Modal */}
+        {showPasswordModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+              <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
+                <h2 className="text-2xl font-bold mb-4 text-center">
+                  Enter Password
+                </h2>
+                {error && (
+                    <p className="text-red-500 text-sm mb-4 text-center">
+                      {error}
+                    </p>
+                )}
+                <div className="mb-4">
+                  <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gold-texture"
+                      placeholder="Password"
+                  />
+                </div>
+                <button
+                    onClick={handlePasswordSubmit}
+                    className="w-full bg-gold-texture text-black font-semibold py-3 rounded-lg shadow-md hover:bg-gold-texture/90 transition-all duration-300"
+                >
+                  Unlock
+                </button>
+              </div>
             </div>
-            <button
-              onClick={handlePasswordSubmit}
-              className="w-full bg-gold-texture text-black font-semibold py-3 rounded-lg shadow-md hover:bg-gold-texture/90 transition-all duration-300"
-            >
-              Unlock
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Main Content */}
-      {showContent && (
-        <div className="p-4">
-          {/* Your main content goes here */}
-        </div>
-      )}
-    </div>
+        {/* Main Content */}
+        {showContent && (
+            <div className="p-4">
+              {/* Your main content goes here */}
+            </div>
+        )}
+      </div>
   );
 }
 
@@ -282,15 +273,52 @@ export default function WeddingRSVPWebsite() {
   }
 
   const handleStart = () => {
+    // Apply scroll settings first, before any state changes
+    // Reset ALL scroll-related styles immediately to enable scrolling
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+
+    // Re-enable scrollbars explicitly for phase 2 and apply immediately
+    const enableScrollbars = document.createElement('style');
+    enableScrollbars.id = 'enable-scrollbars-style';
+    enableScrollbars.textContent = `
+      html, body {
+        scrollbar-width: auto !important;
+        -ms-overflow-style: auto !important;
+        overflow: auto !important;
+        scroll-behavior: smooth !important;
+        
+      }
+      
+      html::-webkit-scrollbar, body::-webkit-scrollbar {
+        display: none;
+        width: 8px;
+      }
+    `;
+
+    // Remove any existing scroll style first to avoid conflicts
+    const existingStyle = document.getElementById('enable-scrollbars-style');
+    if (existingStyle) {
+      document.head.removeChild(existingStyle);
+    }
+
+    document.head.appendChild(enableScrollbars);
+
+    // Force a small scroll to activate the scrollbar
+    window.scrollBy(0, 1);
+    window.scrollBy(0, -1);
+
+    // Now set states after scrolling behavior is established
     setIsScrollLocked(false);
     setHasStarted(true);
 
     // Play audio when the user starts the experience
     handlePlayMedia();
 
+    // Scroll to content with a delay, but shorter than before
     setTimeout(() => {
       mainContentRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 800);
+    }, 400); // Reduced from 800ms
   }
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -401,7 +429,7 @@ export default function WeddingRSVPWebsite() {
 
     // Lock/unlock scroll based on state and device type
     const handleScrollLock = () => {
-      if (isScrollLocked && window.innerWidth >= 1024) { // Only lock on laptop/desktop (1024px+)
+      if (isScrollLocked) { // Removed window.innerWidth condition to apply to all devices
         document.body.style.overflow = 'hidden'
         document.documentElement.style.overflow = 'hidden'
       } else {
@@ -479,23 +507,26 @@ export default function WeddingRSVPWebsite() {
         -webkit-text-fill-color: transparent;
       }
       
-      /* Hide scrollbars for all browsers */
+      /* Hide scrollbars for all browsers - no conditional display */
       * {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* Internet Explorer 10+ */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
       }
-      
+
       *::-webkit-scrollbar {
-        display: none; /* WebKit browsers (Chrome, Safari, Edge) */
+        width: 0 !important;
+        display: none !important; /* WebKit browsers (Chrome, Safari, Edge) */
       }
-      
+
       html, body {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        overflow-x: hidden !important;
       }
-      
+
       html::-webkit-scrollbar, body::-webkit-scrollbar {
-        display: none;
+        width: 0 !important;
+        display: none !important;
       }
     `
     document.head.appendChild(style)
@@ -544,14 +575,14 @@ export default function WeddingRSVPWebsite() {
 
     // Attempt to prefetch using fetch API for better caching
     fetch('/backgroundsound.mp3')
-      .then(response => response.blob())
-      .then(blob => {
-        // Audio is now in browser cache
-        console.log('Audio file prefetched successfully');
-      })
-      .catch(error => {
-        console.warn('Audio prefetch failed, will still use normal loading', error);
-      });
+        .then(response => response.blob())
+        .then(blob => {
+          // Audio is now in browser cache
+          console.log('Audio file prefetched successfully');
+        })
+        .catch(error => {
+          console.warn('Audio prefetch failed, will still use normal loading', error);
+        });
 
     return () => {
       // Cleanup
@@ -564,22 +595,22 @@ export default function WeddingRSVPWebsite() {
 
   if (isLoading) {
     return (
-      <div
-        className="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-cover bg-center"
-        style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
-      >
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-md"></div> {/* Overlay */}
-        <div className="relative z-10 text-center p-4">
-          <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ fontFamily: 'Playfair Display, serif', lineHeight: '1.3' }}>
-            Charly & Elyza
-          </h1>
-          <p className="text-xl md:text-2xl text-white/80 mt-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-            Our moments are loading...
-          </p>
-          {/* Optional: Keep a subtle spinner or remove it */}
-          <div className="mt-8 w-12 h-12 border-2 border-t-2 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <div
+            className="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-cover bg-center"
+            style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md"></div> {/* Overlay */}
+          <div className="relative z-10 text-center p-4">
+            <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ fontFamily: 'Playfair Display, serif', lineHeight: '1.3' }}>
+              Charly & Elyza
+            </h1>
+            <p className="text-xl md:text-2xl text-white/80 mt-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Our moments are loading...
+            </p>
+            {/* Optional: Keep a subtle spinner or remove it */}
+            <div className="mt-8 w-12 h-12 border-2 border-t-2 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
         </div>
-      </div>
     );
   }
 
@@ -587,24 +618,24 @@ export default function WeddingRSVPWebsite() {
       <div className="relative min-h-screen overflow-x-hidden font-serif text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
         {/* Initial Loading Screen */}
         {isInitialLoading && (
-          <div
-            className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-cover bg-center"
-            style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
-          >
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div> {/* Darker, more blur overlay */}
-            <div className="relative z-10 text-center p-4">
-              <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ lineHeight: '1.3' }}>
-                Charly & Elyza
-              </h1>
-              <p className="text-xl md:text-2xl text-white/80 mt-6">
-                Our love story is loading...
-              </p>
+            <div
+                className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-cover bg-center"
+                style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
+            >
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div> {/* Darker, more blur overlay */}
+              <div className="relative z-10 text-center p-4">
+                <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ lineHeight: '1.3' }}>
+                  Charly & Elyza
+                </h1>
+                <p className="text-xl md:text-2xl text-white/80 mt-6">
+                  Our love story is loading...
+                </p>
+              </div>
             </div>
-          </div>
         )}
 
         {/* Background Video */}
-        <div className="fixed inset-0 -z-10">
+        <div className="fixed inset-0 -z-10 overflow-hidden">
           <video
               ref={videoRef} // Assign the ref to the video element
               autoPlay
@@ -633,32 +664,32 @@ export default function WeddingRSVPWebsite() {
         >
           {/* Ensure content for animation is only rendered when it should be visible */}
           {!isInitialLoading && isVideoReady && !hasStarted && (
-            <div className="text-center animate-fadeInUp pointer-events-none">
-              {/*<button*/}
-              {/*    onClick={(e) => {*/}
-              {/*      e.stopPropagation()*/}
-              {/*      setIsScrollLocked(false)*/}
-              {/*      handleStart()*/}
-              {/*    }}*/}
-              {/*    className="glass-effect hover:bg-amber-900/30 transition-all duration-300 text-amber-100 hover:text-white font-semibold py-6 px-12 rounded-full flex items-center space-x-4 mx-auto transform hover:scale-105 active:scale-95 border border-amber-300/30 hover:border-amber-300/50 animate-pulse-gentle text-xl pointer-events-auto"*/}
-              {/*>*/}
-              {/*  <span>Begin Our Story</span>*/}
-              {/*  <div className="animate-bounce">*/}
-              {/*    <ChevronDownIcon />*/}
-              {/*  </div>*/}
-              {/*</button>*/}
+              <div className="text-center animate-fadeInUp pointer-events-none">
+                {/*<button*/}
+                {/*    onClick={(e) => {*/}
+                {/*      e.stopPropagation()*/}
+                {/*      setIsScrollLocked(false)*/}
+                {/*      handleStart()*/}
+                {/*    }}*/}
+                {/*    className="glass-effect hover:bg-amber-900/30 transition-all duration-300 text-amber-100 hover:text-white font-semibold py-6 px-12 rounded-full flex items-center space-x-4 mx-auto transform hover:scale-105 active:scale-95 border border-amber-300/30 hover:border-amber-300/50 animate-pulse-gentle text-xl pointer-events-auto"*/}
+                {/*>*/}
+                {/*  <span>Begin Our Story</span>*/}
+                {/*  <div className="animate-bounce">*/}
+                {/*    <ChevronDownIcon />*/}
+                {/*  </div>*/}
+                {/*</button>*/}
 
-              <p className="mt-8 text-lg font-light opacity-80 text-amber-200">
-                {typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'Click anywhere to continue' : 'Touch anywhere to start'}
-              </p>
-            </div>
+                <p className="mt-8 text-lg font-light opacity-80 text-amber-200">
+                  {typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'Click anywhere to continue' : 'Touch anywhere to start'}
+                </p>
+              </div>
           )}
         </div>
 
         {/* Main Content Sections */}
         <main
             ref={mainContentRef}
-            className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'}`}
+            className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'} overflow-y-hidden`}
         >
           {/* Bible Verse Section */}
           <ScrollSection id="bible-verse">
@@ -695,7 +726,7 @@ export default function WeddingRSVPWebsite() {
               </h2>
 
               <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Date & Time */}
+                {/* Date & Time */}
                 <div className="glass-effect rounded-2xl p-6 transform hover:scale-105 transition-all duration-300 border border-amber-300/20 hover:border-amber-300/40">
                   <div className="flex justify-center mb-4 text-amber-300">
                     <CalendarIcon />
