@@ -206,7 +206,7 @@ export default function WeddingRSVPWebsite() {
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    phone: '',
     attending: '',
     guests: '1',
     dietary: '',
@@ -287,7 +287,7 @@ export default function WeddingRSVPWebsite() {
         -ms-overflow-style: auto !important;
         overflow: auto !important;
         scroll-behavior: smooth !important;
-        
+
       }
       
       html::-webkit-scrollbar, body::-webkit-scrollbar {
@@ -336,7 +336,7 @@ export default function WeddingRSVPWebsite() {
     setIsSubmitting(false)
     setFormData({
       name: '',
-      email: '',
+      phone: '',
       attending: '',
       guests: '1',
       dietary: '',
@@ -454,45 +454,45 @@ export default function WeddingRSVPWebsite() {
         0%, 100% { transform: translateY(0px) rotate(0deg); }
         50% { transform: translateY(-20px) rotate(3deg); }
       }
-      
+
       @keyframes sparkle {
         0%, 100% { opacity: 0; transform: scale(0); }
         50% { opacity: 1; transform: scale(1); }
       }
-      
+
       @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      
+
       @keyframes slideInFromTop {
         from { opacity: 0; transform: translateY(-100vh); }
         to { opacity: 1; transform: translateY(0); }
       }
-      
+
       @keyframes pulse {
         0%, 100% { transform: scale(1); opacity: 1; }
         50% { transform: scale(1.05); opacity: 0.9; }
       }
-      
+
       .animate-sparkle {
         animation: sparkle 2s ease-in-out infinite;
       }
-      
+
       .animate-fadeInUp {
         animation: fadeInUp 0.8s ease-out forwards;
       }
-      
+
       .animate-pulse-gentle {
         animation: pulse 3s ease-in-out infinite;
       }
-      
+
       .glass-effect {
         backdrop-filter: blur(16px) saturate(180%);
         background-color: rgba(139, 115, 85, 0.1);
         border: 1px solid rgba(251, 191, 36, 0.2);
       }
-      
+
       .text-shadow-romantic {
         text-shadow: 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px rgba(251, 191, 36, 0.3);
       }
@@ -506,7 +506,7 @@ export default function WeddingRSVPWebsite() {
         color: #B8860B; /* Fallback gold color */
         -webkit-text-fill-color: transparent;
       }
-      
+
       /* Hide scrollbars for all browsers - no conditional display */
       * {
         scrollbar-width: none !important; /* Firefox */
@@ -848,14 +848,14 @@ export default function WeddingRSVPWebsite() {
                   </div>
 
                   <div>
-                    <label htmlFor="phonenumber" className="block text-lg font-medium mb-2 text-amber-100">
+                    <label htmlFor="phone" className="block text-lg font-medium mb-2 text-amber-100">
                       Phone Number *
                     </label>
                     <input
-                        type="number"
-                        id="phonenumber"
-                        name="Phone Number"
-                        value={formData.email}
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
                         onChange={handleFormChange}
                         required
                         className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture placeholder-yellow-600 bg-amber-950/20"
