@@ -1,7 +1,46 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-// Icon Components
+// A mock function to simulate fetching data from a Google Sheet.
+// In a real application, you would replace this with an actual API call.
+const fetchGuestList = async () => {
+  const sheetUrl = 'https://docs.google.com/spreadsheets/d/1qmH94UaJRNijT3QW97AgUT5Kc7m7Q-q5OZRlhFKziLs/export?format=csv';
+
+  try {
+    const response = await fetch(sheetUrl);
+    const csvText = await response.text();
+    const rows = csvText.split('\n').slice(1); // Remove header row
+
+    const guests = rows
+      .map(row => {
+        const columns = row.split(',');
+        // Column A: Name, Column B: Guests Allowed, Column C: RSVP Status
+        const name = columns[0] ? columns[0].trim() : null;
+        const guestsAllowedStr = columns[1] ? columns[1].trim() : '1'; // Default to '1' if empty
+        const rsvpStatus = columns[2] ? columns[2].trim() : ''; // RSVP status from Column C
+
+        // If name is missing or if there's an RSVP status, filter out this guest
+        if (!name || rsvpStatus) {
+          return null;
+        }
+
+        return {
+          name: name,
+          guests: parseInt(guestsAllowedStr, 10) || 1 // Default to 1 if parsing fails
+        };
+      })
+      .filter(guest => guest !== null) as { name: string; guests: number }[]; // Filter out nulls and assert type
+
+    return guests;
+  } catch (error) {
+    console.error('Error fetching guest list:', error);
+    // Fallback to empty list in case of an error
+    return [];
+  }
+};
+
+
+// Icon Components (retained from original code)
 const ChevronDownIcon = () => (
     <svg className="w-6 h-6 text-gold-texture" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -32,102 +71,6 @@ const TimeIcon = () => (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 )
-
-// Main Page Component
-const Home = () => {
-  const [showContent, setShowContent] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(true);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [showPlayButton, setShowPlayButton] = useState(false);
-  const [mediaPlaying, setMediaPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const handlePasswordSubmit = () => {
-    // Retrieve the password from environment variables
-    const correctPassword = process.env.NEXT_PUBLIC_PAGE_PASSWORD;
-    if (password === correctPassword) {
-      setShowPasswordModal(false);
-      setShowContent(true);
-      // Video and audio playback is now handled by the useEffect hook
-      // that listens for changes to 'showContent'.
-    } else {
-      setError('Incorrect password. Please try again.');
-    }
-  };
-
-  useEffect(() => {
-    // This effect ensures content is shown if no password is set
-    if (!process.env.NEXT_PUBLIC_PAGE_PASSWORD) {
-      setShowPasswordModal(false);
-      setShowContent(true);
-    }
-  }, []);
-
-  // Effect to play video and audio when content is shown
-  useEffect(() => {
-    if (showContent) {
-      if (videoRef.current) {
-        videoRef.current.play().catch(error => {
-          console.error("Video play prevented:", error);
-          // You might want to inform the user or provide a manual play button here.
-        });
-      }
-    }
-  }, [showContent]); // This effect runs when 'showContent' changes.
-
-  // Scroll down functionality
-  const scrollToContent = () => {
-    const contentElement = document.getElementById('content-section');
-    if (contentElement) {
-      contentElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // JSX for the component
-  return (
-      <div className="relative min-h-screen bg-black text-white">
-        {/* Password Modal */}
-        {showPasswordModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-              <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
-                <h2 className="text-2xl font-bold mb-4 text-center">
-                  Enter Password
-                </h2>
-                {error && (
-                    <p className="text-red-500 text-sm mb-4 text-center">
-                      {error}
-                    </p>
-                )}
-                <div className="mb-4">
-                  <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gold-texture"
-                      placeholder="Password"
-                  />
-                </div>
-                <button
-                    onClick={handlePasswordSubmit}
-                    className="w-full bg-gold-texture text-black font-semibold py-3 rounded-lg shadow-md hover:bg-gold-texture/90 transition-all duration-300"
-                >
-                  Unlock
-                </button>
-              </div>
-            </div>
-        )}
-
-        {/* Main Content */}
-        {showContent && (
-            <div className="p-4">
-              {/* Your main content goes here */}
-            </div>
-        )}
-      </div>
-  );
-}
-
 // Scroll Section Component with Intersection Observer
 interface ScrollSectionProps {
   children: React.ReactNode;
@@ -194,19 +137,24 @@ const FloatingElement = ({ children, delay = 0 }: FloatingElementProps) => (
     </div>
 )
 
+
 // Main Wedding Website Component
 export default function WeddingRSVPWebsite() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null); // ADD audioRef here
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true); // New state for initial loading screen
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
   const [isScrollLocked, setIsScrollLocked] = useState(true);
   const [showPlayButton, setShowPlayButton] = useState(false);
   const [mediaPlaying, setMediaPlaying] = useState(false);
+  const [guestList, setGuestList] = useState<{ name: string; guests: number }[]>([]);
+  const [name, setName] = useState('');
+  const [suggestions, setSuggestions] = useState<{ name: string; guests: number }[]>([]);
+  const [selectedGuest, setSelectedGuest] = useState<{ name: string; guests: number } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
+    phoneNumber: '', // Changed from email to phoneNumber
     attending: '',
     guests: '1',
     dietary: '',
@@ -216,7 +164,53 @@ export default function WeddingRSVPWebsite() {
   const mainContentRef = useRef<HTMLDivElement | null>(null)
 
   const [isLoading, setIsLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false); // This is WeddingRSVPWebsite's showContent
+  const [showContent, setShowContent] = useState(false);
+
+  // Fetch guest list from the mock API on component mount
+  useEffect(() => {
+    const loadGuestList = async () => {
+      const list = await fetchGuestList();
+      setGuestList(list as { name: string; guests: number }[]);
+    };
+    loadGuestList();
+  }, []);
+
+  // Handle name input changes and provide suggestions
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setName(value);
+    if (value.length > 1) {
+      const filteredSuggestions = guestList.filter(guest =>
+          guest.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setSuggestions(filteredSuggestions);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  // Handle selection of a guest from the suggestions
+  const handleSuggestionClick = (guest: { name: string; guests: number }) => {
+    setName(guest.name);
+    setSelectedGuest(guest);
+    setSuggestions([]);
+    setFormData(prev => ({
+      ...prev,
+      name: guest.name,
+      guests: '1',
+      phoneNumber: prev.phoneNumber // Keep existing phone number or clear if needed
+    }));
+  };
+
+  // Generate guest number options based on the selected guest's allowance
+  const guestNumberOptions = useMemo(() => {
+    if (!selectedGuest) return [<option key="1" value="1">Just me</option>];
+    return Array.from({ length: selectedGuest.guests }, (_, i) => i + 1).map(num => (
+        <option key={num} value={num}>
+          {num} {num > 1 ? 'people' : 'person'}
+        </option>
+    ));
+  }, [selectedGuest]);
 
   // New useEffect for preloading videos
   useEffect(() => {
@@ -287,7 +281,7 @@ export default function WeddingRSVPWebsite() {
         -ms-overflow-style: auto !important;
         overflow: auto !important;
         scroll-behavior: smooth !important;
-
+        
       }
       
       html::-webkit-scrollbar, body::-webkit-scrollbar {
@@ -327,33 +321,58 @@ export default function WeddingRSVPWebsite() {
   }
 
   const handleSubmit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Basic validation
+    if (!formData.name || !formData.attending || !formData.phoneNumber) {
+      alert('Please fill out all required fields: Name, Attending status, and Phone Number.');
+      setIsSubmitting(false);
+      return;
+    }
 
-    alert('Thank you for your RSVP! We can\'t wait to celebrate with you! 💕')
-    setIsSubmitting(false)
-    setFormData({
-      name: '',
-      phone: '',
-      attending: '',
-      guests: '1',
-      dietary: '',
-      message: ''
-    })
-  }
+    try {
+      const response = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          attending: formData.attending,
+          guests: formData.guests,
+          phonenumber: formData.phoneNumber, // Ensure this matches API expectation
+          message: formData.message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Something went wrong with the submission.');
+      }
+
+      alert('Thank you for your RSVP! We can\'t wait to celebrate with you! 💕');
+      // Reset form state on successful submission
+      setFormData({
+        name: '',
+        phoneNumber: '', // Reset phoneNumber
+        attending: '',
+        guests: '1',
+        dietary: '',
+        message: ''
+      });
+      setName(''); // Also reset the separate name state for the input field
+      setSelectedGuest(null);
+
+    } catch (error: any) {
+      console.error('Submission Error:', error);
+      alert(`There was an error submitting your RSVP: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // MODIFY the existing useEffect for video loading logic.
-  // It\'s the one that initializes the video, sets isVideoReady, and isInitialLoading.
-  // It currently has an empty dependency array [].
-  // Change it from:
-  // useEffect(() => {
-  //   const videoElement = videoRef.current;
-  //   let fallbackTimer: NodeJS.Timeout | undefined;
-  //   // ... (rest of the original effect)
-  // }, []);
-  // TO:
   useEffect(() => {
     if (isLoading) { // <-- ADD THIS GUARD: Wait for the main 2s loading to complete
       return;
@@ -414,9 +433,6 @@ export default function WeddingRSVPWebsite() {
         setShowPlayButton(true); // Show play button when audio is ready
       };
       audio.addEventListener('canplaythrough', handleCanPlayThrough);
-
-      // We don't auto-play here anymore, instead we'll show a play button
-      // that requires user interaction before playing
     }
   }, [isVideoReady, isInitialLoading]); // Play when video is ready and initial loading is done
 
@@ -427,9 +443,8 @@ export default function WeddingRSVPWebsite() {
     link.rel = 'stylesheet'
     document.head.appendChild(link)
 
-    // Lock/unlock scroll based on state and device type
     const handleScrollLock = () => {
-      if (isScrollLocked) { // Removed window.innerWidth condition to apply to all devices
+      if (isScrollLocked) {
         document.body.style.overflow = 'hidden'
         document.documentElement.style.overflow = 'hidden'
       } else {
@@ -440,59 +455,57 @@ export default function WeddingRSVPWebsite() {
 
     handleScrollLock()
 
-    // Handle window resize to check if we need to update scroll lock
     const handleResize = () => {
       handleScrollLock()
     }
 
     window.addEventListener('resize', handleResize)
 
-    // Add custom CSS for animations
     const style = document.createElement('style')
     style.textContent = `
       @keyframes float {
         0%, 100% { transform: translateY(0px) rotate(0deg); }
         50% { transform: translateY(-20px) rotate(3deg); }
       }
-
+      
       @keyframes sparkle {
         0%, 100% { opacity: 0; transform: scale(0); }
         50% { opacity: 1; transform: scale(1); }
       }
-
+      
       @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
       }
-
+      
       @keyframes slideInFromTop {
         from { opacity: 0; transform: translateY(-100vh); }
         to { opacity: 1; transform: translateY(0); }
       }
-
+      
       @keyframes pulse {
         0%, 100% { transform: scale(1); opacity: 1; }
         50% { transform: scale(1.05); opacity: 0.9; }
       }
-
+      
       .animate-sparkle {
         animation: sparkle 2s ease-in-out infinite;
       }
-
+      
       .animate-fadeInUp {
         animation: fadeInUp 0.8s ease-out forwards;
       }
-
+      
       .animate-pulse-gentle {
         animation: pulse 3s ease-in-out infinite;
       }
-
+      
       .glass-effect {
         backdrop-filter: blur(16px) saturate(180%);
         background-color: rgba(139, 115, 85, 0.1);
         border: 1px solid rgba(251, 191, 36, 0.2);
       }
-
+      
       .text-shadow-romantic {
         text-shadow: 2px 2px 8px rgba(0,0,0,0.5), 0 0 20px rgba(251, 191, 36, 0.3);
       }
@@ -506,16 +519,15 @@ export default function WeddingRSVPWebsite() {
         color: #B8860B; /* Fallback gold color */
         -webkit-text-fill-color: transparent;
       }
-
-      /* Hide scrollbars for all browsers - no conditional display */
+      
       * {
-        scrollbar-width: none !important; /* Firefox */
-        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
       }
 
       *::-webkit-scrollbar {
         width: 0 !important;
-        display: none !important; /* WebKit browsers (Chrome, Safari, Edge) */
+        display: none !important;
       }
 
       html, body {
@@ -543,41 +555,34 @@ export default function WeddingRSVPWebsite() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 seconds mandatory loading time
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!isLoading) {
-      // Start fade-in animation for content after a brief delay
       const contentTimer = setTimeout(() => {
         setShowContent(true);
-      }, 100); // Adjust delay for desired transition smoothness
+      }, 100);
       return () => clearTimeout(contentTimer);
     }
   }, [isLoading]);
 
-  // Further optimize audio loading by creating and preparing it in an earlier phase
   useEffect(() => {
-    // Create audio element during initialization to start loading earlier
     const backgroundAudio = new Audio('/backgroundsound.mp3');
-    backgroundAudio.preload = 'auto'; // Force preloading
-    backgroundAudio.load(); // Start loading immediately
+    backgroundAudio.preload = 'auto';
+    backgroundAudio.load();
 
-    // Store reference to be used later when we need to play it
     if (audioRef.current === null) {
       audioRef.current = backgroundAudio;
     }
 
-    // Setup audio properties
     backgroundAudio.loop = true;
-    backgroundAudio.volume = 0.6; // Set volume to 60% for better user experience
+    backgroundAudio.volume = 0.6;
 
-    // Attempt to prefetch using fetch API for better caching
     fetch('/backgroundsound.mp3')
         .then(response => response.blob())
         .then(blob => {
-          // Audio is now in browser cache
           console.log('Audio file prefetched successfully');
         })
         .catch(error => {
@@ -585,7 +590,6 @@ export default function WeddingRSVPWebsite() {
         });
 
     return () => {
-      // Cleanup
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
@@ -599,7 +603,7 @@ export default function WeddingRSVPWebsite() {
             className="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-cover bg-center"
             style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
         >
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md"></div> {/* Overlay */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
           <div className="relative z-10 text-center p-4">
             <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ fontFamily: 'Playfair Display, serif', lineHeight: '1.3' }}>
               Charly & Elyza
@@ -607,7 +611,6 @@ export default function WeddingRSVPWebsite() {
             <p className="text-xl md:text-2xl text-white/80 mt-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Our moments are loading...
             </p>
-            {/* Optional: Keep a subtle spinner or remove it */}
             <div className="mt-8 w-12 h-12 border-2 border-t-2 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         </div>
@@ -616,13 +619,12 @@ export default function WeddingRSVPWebsite() {
 
   return (
       <div className="relative min-h-screen overflow-x-hidden font-serif text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
-        {/* Initial Loading Screen */}
         {isInitialLoading && (
             <div
                 className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-cover bg-center"
                 style={{ backgroundImage: "url('/charlyandelyzasavethedate-thumbnail.jpg')" }}
             >
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div> {/* Darker, more blur overlay */}
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div>
               <div className="relative z-10 text-center p-4">
                 <h1 className="text-5xl md:text-7xl font-bold text-white text-shadow-romantic animate-pulse pb-2" style={{ lineHeight: '1.3' }}>
                   Charly & Elyza
@@ -634,10 +636,9 @@ export default function WeddingRSVPWebsite() {
             </div>
         )}
 
-        {/* Background Video */}
         <div className="fixed inset-0 -z-10 overflow-hidden">
           <video
-              ref={videoRef} // Assign the ref to the video element
+              ref={videoRef}
               autoPlay
               muted
               loop
@@ -645,53 +646,30 @@ export default function WeddingRSVPWebsite() {
               className="absolute inset-0 w-full h-full object-cover"
               poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f4f1eb' viewBox='0 0 1200 800'%3E%3Crect width='1200' height='800' fill='%23f4f1eb'/%3E%3Ctext x='50%25' y='50%25' font-family='serif' font-size='48' fill='%23B8860B' text-anchor='middle' dy='0.25em'%3EElyza %26 Charly%3C/text%3E%3C/svg%3E"
           >
-            {/* Replace with your actual video files */}
             <source src="/charlyandelyzasavethedate.mp4" type="video/mp4" />
             <source src="/charlyandelyzasavethedate.webm" type="video/webm" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-amber-900/20 to-black/60"></div>
         </div>
-
-        {/* Floating Decorative Elements - Conditionally render based on !isInitialLoading and isVideoReady */}
         {!isInitialLoading && isVideoReady}
-
-        {/* Overlay - Video with Button Only */}
         <div
-            className={`fixed inset-0 z-50 flex flex-col justify-center items-center transition-opacity duration-1000 cursor-pointer ${ // Changed to transition-opacity
+            className={`fixed inset-0 z-50 flex flex-col justify-center items-center transition-opacity duration-1000 cursor-pointer ${
                 (!isInitialLoading && isVideoReady && !hasStarted) ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             onClick={handleStart}
         >
-          {/* Ensure content for animation is only rendered when it should be visible */}
           {!isInitialLoading && isVideoReady && !hasStarted && (
               <div className="text-center animate-fadeInUp pointer-events-none">
-                {/*<button*/}
-                {/*    onClick={(e) => {*/}
-                {/*      e.stopPropagation()*/}
-                {/*      setIsScrollLocked(false)*/}
-                {/*      handleStart()*/}
-                {/*    }}*/}
-                {/*    className="glass-effect hover:bg-amber-900/30 transition-all duration-300 text-amber-100 hover:text-white font-semibold py-6 px-12 rounded-full flex items-center space-x-4 mx-auto transform hover:scale-105 active:scale-95 border border-amber-300/30 hover:border-amber-300/50 animate-pulse-gentle text-xl pointer-events-auto"*/}
-                {/*>*/}
-                {/*  <span>Begin Our Story</span>*/}
-                {/*  <div className="animate-bounce">*/}
-                {/*    <ChevronDownIcon />*/}
-                {/*  </div>*/}
-                {/*</button>*/}
-
                 <p className="mt-8 text-lg font-light opacity-80 text-amber-200">
                   {typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'Click anywhere to continue' : 'Touch anywhere to start'}
                 </p>
               </div>
           )}
         </div>
-
-        {/* Main Content Sections */}
         <main
             ref={mainContentRef}
             className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'} overflow-y-hidden`}
         >
-          {/* Bible Verse Section */}
           <ScrollSection id="bible-verse">
             <div className="text-center">
               <p className="text-2xl md:text-3xl font-light text-shadow-romantic text-amber-100 mb-4 italic">
@@ -702,8 +680,6 @@ export default function WeddingRSVPWebsite() {
               </p>
             </div>
           </ScrollSection>
-
-          {/* Couple Introduction - Now includes names */}
           <ScrollSection id="introduction">
             <div className="text-center">
               <p className="text-xl md:text-2xl leading-relaxed max-w-3xl mx-auto font-light text-amber-200">
@@ -717,8 +693,6 @@ export default function WeddingRSVPWebsite() {
               </div>
             </div>
           </ScrollSection>
-
-          {/* Wedding Details */}
           <ScrollSection id="details">
             <div className="text-center">
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-gold-texture leading-snug">
@@ -726,7 +700,6 @@ export default function WeddingRSVPWebsite() {
               </h2>
 
               <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                {/* Date & Time */}
                 <div className="glass-effect rounded-2xl p-6 transform hover:scale-105 transition-all duration-300 border border-amber-300/20 hover:border-amber-300/40">
                   <div className="flex justify-center mb-4 text-amber-300">
                     <CalendarIcon />
@@ -737,7 +710,6 @@ export default function WeddingRSVPWebsite() {
                   <p className="text-sm opacity-80 mt-2 text-amber-200">Reception to follow</p>
                 </div>
 
-                {/* Location */}
                 <div
                     className="glass-effect rounded-2xl p-6 transform hover:scale-105 transition-all duration-300 border border-amber-300/20 hover:border-amber-300/40" >
                   <a
@@ -758,14 +730,11 @@ export default function WeddingRSVPWebsite() {
               </div>
             </div>
           </ScrollSection>
-
-          {/* Timeline */}
           <ScrollSection id="timeline">
             <div className="text-center">
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-gold-texture">
                 Celebration Timeline
               </h2>
-
               <div className="max-w-2xl mx-auto space-y-6">
                 <div className="glass-effect rounded-xl p-6 text-left border border-amber-300/20">
                   <div className="flex items-center mb-2">
@@ -776,7 +745,6 @@ export default function WeddingRSVPWebsite() {
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Exchange of vows in the church courtyard</p>
                 </div>
-
                 <div className="glass-effect rounded-xl p-6 text-left border border-amber-300/20">
                   <div className="flex items-center mb-2">
                     <div className="text-amber-300">
@@ -799,14 +767,11 @@ export default function WeddingRSVPWebsite() {
               </div>
             </div>
           </ScrollSection>
-
-          {/* Additional Information */}
           <ScrollSection id="info">
             <div className="text-center">
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-gold-texture">
                 Important Information
               </h2>
-
               <div className="grid md:grid-cols-1 gap-8 max-w-4xl mx-auto text-left">
                 <div className="glass-effect rounded-2xl p-6 border border-amber-300/20">
                   <p className="text-lg leading-relaxed text-amber-200">
@@ -818,8 +783,6 @@ export default function WeddingRSVPWebsite() {
               </div>
             </div>
           </ScrollSection>
-
-          {/* RSVP Form */}
           <ScrollSection id="rsvp">
             <div className="text-center">
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-gold-texture">
@@ -828,10 +791,9 @@ export default function WeddingRSVPWebsite() {
               <p className="text-xl mb-8 opacity-90 text-amber-100">
                 Kindly respond by July 5th, 2025
               </p>
-
               <div className="max-w-2xl mx-auto space-y-6 text-left">
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="relative">
                     <label htmlFor="name" className="block text-lg font-medium mb-2 text-amber-100">
                       Full Name *
                     </label>
@@ -839,23 +801,36 @@ export default function WeddingRSVPWebsite() {
                         type="text"
                         id="name"
                         name="name"
-                        value={formData.name}
-                        onChange={handleFormChange}
+                        value={name}
+                        onChange={handleNameChange}
                         required
                         className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture placeholder-yellow-600 bg-amber-950/20"
                         placeholder="Your full name"
+                        autoComplete="off"
                     />
+                    {suggestions.length > 0 && (
+                        <ul className="absolute z-10 w-full bg-amber-950/80 border border-amber-300/30 rounded-xl mt-1 max-h-60 overflow-auto">
+                          {suggestions.map((guest, index) => (
+                              <li
+                                  key={index}
+                                  className="px-4 py-2 cursor-pointer hover:bg-amber-900/50 text-amber-100"
+                                  onClick={() => handleSuggestionClick(guest)}
+                              >
+                                {guest.name}
+                              </li>
+                          ))}
+                        </ul>
+                    )}
                   </div>
-
                   <div>
-                    <label htmlFor="phone" className="block text-lg font-medium mb-2 text-amber-100">
+                    <label htmlFor="phonenumber" className="block text-lg font-medium mb-2 text-amber-100">
                       Phone Number *
                     </label>
                     <input
                         type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
+                        id="phonenumber"
+                        name="phoneNumber" // Changed to phoneNumber to match state
+                        value={formData.phoneNumber} // Changed from formData.email
                         onChange={handleFormChange}
                         required
                         className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture placeholder-yellow-600 bg-amber-950/20"
@@ -863,7 +838,6 @@ export default function WeddingRSVPWebsite() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-lg font-medium mb-4 text-amber-100">
                     Will you be attending? *
@@ -893,7 +867,6 @@ export default function WeddingRSVPWebsite() {
                     </label>
                   </div>
                 </div>
-
                 {formData.attending === 'yes' && (
                     <div className="space-y-6 animate-fadeInUp">
                       <div>
@@ -906,17 +879,14 @@ export default function WeddingRSVPWebsite() {
                             value={formData.guests}
                             onChange={handleFormChange}
                             className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture bg-amber-950/20"
+                            disabled={!selectedGuest}
                         >
-                          <option value="1">Just me</option>
-                          <option value="2">2 people</option>
-                          <option value="2">3 people</option>
-                          <option value="2">4 people</option>
-                          <option value="2">5 people</option>
+                          {guestNumberOptions}
                         </select>
+                        {!selectedGuest && <p className="text-amber-200 text-sm mt-2">Please select your name from the list to see guest options.</p>}
                       </div>
                     </div>
                 )}
-
                 <div>
                   <label htmlFor="message" className="block text-lg font-medium mb-2 text-amber-100">
                     Special Message (Optional)
@@ -931,7 +901,6 @@ export default function WeddingRSVPWebsite() {
                       placeholder="Share your excitement or well wishes with us!"
                   />
                 </div>
-
                 <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
