@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\n/g, '\n'),
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
@@ -65,6 +65,42 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 3. If attending, color the row green
+    if (attending === 'yes') {
+      const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+      const sheetId = spreadsheetInfo.data.sheets?.[0]?.properties?.sheetId;
+
+      if (sheetId !== undefined) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: sheetId,
+                    startRowIndex: rowIndex,
+                    endRowIndex: rowIndex + 1,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: {
+                        red: 0.71,
+                        green: 0.84,
+                        blue: 0.66,
+                      },
+                    },
+                  },
+                  fields: 'userEnteredFormat.backgroundColor',
+                },
+              },
+            ],
+          },
+        });
+      }
+    }
+
+
     return NextResponse.json({ success: true, data: updateResponse.data });
   } catch (error) {
     console.error('API Error:', error);
@@ -72,4 +108,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
   }
 }
-

@@ -12,29 +12,34 @@ const fetchGuestList = async () => {
     const rows = csvText.split('\n').slice(1); // Remove header row
 
     const guests = rows
-      .map(row => {
-        const columns = row.split(',');
-        // Column A: Name, Column B: Guests Allowed, Column C: RSVP Status
-        const name = columns[0] ? columns[0].trim() : null;
-        const guestsAllowedStr = columns[1] ? columns[1].trim() : '1'; // Default to '1' if empty
-        const rsvpStatus = columns[2] ? columns[2].trim() : ''; // RSVP status from Column C
+        .map(row => {
+          const columns = row.split(',');
+          const name = columns[0] ? columns[0].trim() : null;
+          const guestsAllowedStr = columns[1] ? columns[1].trim() : null; // Null if empty
+          const rsvpStatus = columns[2] ? columns[2].trim() : '';
 
-        // If name is missing or if there's an RSVP status, filter out this guest
-        if (!name || rsvpStatus) {
-          return null;
-        }
+          if (!name || rsvpStatus) {
+            return null;
+          }
 
-        return {
-          name: name,
-          guests: parseInt(guestsAllowedStr, 10) || 1 // Default to 1 if parsing fails
-        };
-      })
-      .filter(guest => guest !== null) as { name: string; guests: number }[]; // Filter out nulls and assert type
+          let guestsAllowed: number | null = null;
+          if (guestsAllowedStr) {
+            const parsedGuests = parseInt(guestsAllowedStr, 10);
+            if (!isNaN(parsedGuests) && parsedGuests > 0) {
+              guestsAllowed = parsedGuests;
+            }
+          }
+
+          return {
+            name: name,
+            guests: guestsAllowed, // Can be number or null
+          };
+        })
+        .filter((guest): guest is { name: string; guests: number | null } => guest !== null);
 
     return guests;
   } catch (error) {
     console.error('Error fetching guest list:', error);
-    // Fallback to empty list in case of an error
     return [];
   }
 };
@@ -141,17 +146,17 @@ const FloatingElement = ({ children, delay = 0 }: FloatingElementProps) => (
 // Main Wedding Website Component
 export default function WeddingRSVPWebsite() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
   const [isScrollLocked, setIsScrollLocked] = useState(true);
   const [showPlayButton, setShowPlayButton] = useState(false);
   const [mediaPlaying, setMediaPlaying] = useState(false);
-  const [guestList, setGuestList] = useState<{ name: string; guests: number }[]>([]);
+  const [guestList, setGuestList] = useState<{ name: string; guests: number | null }[]>([]);
   const [name, setName] = useState('');
-  const [suggestions, setSuggestions] = useState<{ name: string; guests: number }[]>([]);
-  const [selectedGuest, setSelectedGuest] = useState<{ name: string; guests: number } | null>(null);
+  const [suggestions, setSuggestions] = useState<{ name: string; guests: number | null }[]>([]);
+  const [selectedGuest, setSelectedGuest] = useState<{ name: string; guests: number | null } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phoneNumber: '', // Changed from email to phoneNumber
@@ -170,7 +175,7 @@ export default function WeddingRSVPWebsite() {
   useEffect(() => {
     const loadGuestList = async () => {
       const list = await fetchGuestList();
-      setGuestList(list as { name: string; guests: number }[]);
+      setGuestList(list);
     };
     loadGuestList();
   }, []);
@@ -190,7 +195,7 @@ export default function WeddingRSVPWebsite() {
   };
 
   // Handle selection of a guest from the suggestions
-  const handleSuggestionClick = (guest: { name: string; guests: number }) => {
+  const handleSuggestionClick = (guest: { name: string; guests: number | null }) => {
     setName(guest.name);
     setSelectedGuest(guest);
     setSuggestions([]);
@@ -204,7 +209,9 @@ export default function WeddingRSVPWebsite() {
 
   // Generate guest number options based on the selected guest's allowance
   const guestNumberOptions = useMemo(() => {
-    if (!selectedGuest) return [<option key="1" value="1">Just me</option>];
+    if (!selectedGuest || selectedGuest.guests === null) {
+      return [<option key="1" value="1">Just me</option>];
+    }
     return Array.from({ length: selectedGuest.guests }, (_, i) => i + 1).map(num => (
         <option key={num} value={num}>
           {num} {num > 1 ? 'people' : 'person'}
@@ -873,17 +880,45 @@ export default function WeddingRSVPWebsite() {
                         <label htmlFor="guests" className="block text-lg font-medium mb-2 text-amber-100">
                           Number of Guests
                         </label>
-                        <select
-                            id="guests"
-                            name="guests"
-                            value={formData.guests}
-                            onChange={handleFormChange}
-                            className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture bg-amber-950/20"
-                            disabled={!selectedGuest}
-                        >
-                          {guestNumberOptions}
-                        </select>
-                        {!selectedGuest && <p className="text-amber-200 text-sm mt-2">Please select your name from the list to see guest options.</p>}
+                        {!selectedGuest ? (
+                            // Case when no guest is selected from the suggestion list yet
+                            <>
+                              <select
+                                  id="guests"
+                                  name="guests"
+                                  value={formData.guests}
+                                  onChange={handleFormChange}
+                                  className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture bg-amber-950/20"
+                                  disabled={true}
+                              >
+                                {guestNumberOptions}
+                              </select>
+                              <p className="text-amber-200 text-sm mt-2">Please select your name from the list to see guest options.</p>
+                            </>
+                        ) : selectedGuest.guests !== null ? (
+                            // Case when the selected guest has a specific number of guests allowed
+                            <select
+                                id="guests"
+                                name="guests"
+                                value={formData.guests}
+                                onChange={handleFormChange}
+                                className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture bg-amber-950/20"
+                            >
+                              {guestNumberOptions}
+                            </select>
+                        ) : (
+                            // Case when the guest can bring any number of guests (Column B is empty)
+                            <input
+                                type="number"
+                                id="guests"
+                                name="guests"
+                                value={formData.guests}
+                                onChange={handleFormChange}
+                                min="1"
+                                className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture placeholder-yellow-600 bg-amber-950/20"
+                                placeholder="Enter number of guests"
+                            />
+                        )}
                       </div>
                     </div>
                 )}
