@@ -961,7 +961,7 @@ export default function WeddingRSVPWebsite() {
                 </button>
                 <div className="mt-8 text-center text-amber-200">
                   <p>Your presence at our wedding is the greatest gift of all.</p>
-                  <p>For those who wish, which account: 20507813-03</p>
+                  <p>For those who wish, whish account: 20507813-03</p>
                 </div>
               </div>
             </div>
