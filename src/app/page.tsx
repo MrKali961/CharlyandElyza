@@ -687,8 +687,8 @@ export default function WeddingRSVPWebsite() {
                 Mark 10:9
               </p>
             </div>
-            {/* Chevron scroll down animation */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 md:bottom-16 z-20">
+            {/* Chevron scroll down animation - POSITION ADJUSTED HERE */}
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-30 md:bottom-32 z-20">
               <div className="chevron-container">
                 <div className="chevron"></div>
                 <div className="chevron"></div>
@@ -973,4 +973,3 @@ export default function WeddingRSVPWebsite() {
       </div>
   );
 }
-
