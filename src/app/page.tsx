@@ -359,6 +359,8 @@ export default function WeddingRSVPWebsite() {
       }
 
       alert('Thank you for your RSVP! We can\'t wait to celebrate with you! 💕');
+      const updatedList = await fetchGuestList();
+      setGuestList(updatedList as { name: string; guests: number }[]);
       // Reset form state on successful submission
       setFormData({
         name: '',
