@@ -359,8 +359,6 @@ export default function WeddingRSVPWebsite() {
       }
 
       alert('Thank you for your RSVP! We can\'t wait to celebrate with you! 💕');
-      const updatedList = await fetchGuestList();
-      setGuestList(updatedList as { name: string; guests: number }[]);
       // Reset form state on successful submission
       setFormData({
         name: '',
@@ -688,6 +686,12 @@ export default function WeddingRSVPWebsite() {
                 Mark 10:9
               </p>
             </div>
+            <div className="mt-10 w-24 mx-auto text-white">
+              <p className="text-center  ">Scroll down</p>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
           </ScrollSection>
           <ScrollSection id="introduction">
             <div className="text-center">
@@ -955,6 +959,10 @@ export default function WeddingRSVPWebsite() {
                       'Send RSVP'
                   )}
                 </button>
+                <div className="mt-8 text-center text-amber-200">
+                  <p>Your presence at our wedding is the greatest gift of all.</p>
+                  <p>For those who wish, which account: 20507813-03</p>
+                </div>
               </div>
             </div>
           </ScrollSection>

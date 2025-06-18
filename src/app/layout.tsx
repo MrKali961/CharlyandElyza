@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Charly & Elyza",
   description: "Wedding celebration of Charly and Elyza",
+  icons: "/Logo.png",
 };
 
 export default function RootLayout({
