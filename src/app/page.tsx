@@ -76,13 +76,15 @@ const TimeIcon = () => (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 )
-// Scroll Section Component with Intersection Observer
+
+// UPDATED Scroll Section Component with Intersection Observer
 interface ScrollSectionProps {
   children: React.ReactNode;
   id: string;
   className?: string;
+  noWrapper?: boolean; // New optional prop
 }
-const ScrollSection = ({ children, id, className = "" }: ScrollSectionProps) => {
+const ScrollSection = ({ children, id, className = "", noWrapper = false }: ScrollSectionProps) => {
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef(null)
 
@@ -92,6 +94,7 @@ const ScrollSection = ({ children, id, className = "" }: ScrollSectionProps) => 
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               setIsVisible(true)
+              observer.unobserve(entry.target); // Unobserve after it's visible for performance
             }
           })
         },
@@ -118,9 +121,13 @@ const ScrollSection = ({ children, id, className = "" }: ScrollSectionProps) => 
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           } ${className}`}
       >
-        <div className="bg-amber-950/20 border border-amber-300/20 rounded-3xl shadow-2xl max-w-4xl w-full p-8 md:p-12 text-center">
-          {children}
-        </div>
+        {noWrapper ? (
+            <>{children}</>
+        ) : (
+            <div className="bg-amber-950/20 border border-amber-300/20 rounded-3xl shadow-2xl max-w-4xl w-full p-8 md:p-12 text-center">
+              {children}
+            </div>
+        )}
       </section>
   )
 }
@@ -667,7 +674,6 @@ export default function WeddingRSVPWebsite() {
         >
           {!isInitialLoading && isVideoReady && !hasStarted && (
               <div className="text-center animate-fadeInUp pointer-events-none">
-                <div className="logo-gold-texture mb-4"></div>
                 <p className="mt-8 text-lg font-light opacity-80 text-amber-200">
                   {typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'Click anywhere to continue' : 'Touch anywhere to start'}
                 </p>
@@ -676,10 +682,14 @@ export default function WeddingRSVPWebsite() {
         </div>
         <main
             ref={mainContentRef}
-            className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'} overflow-y-hidden`}
+            className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'}`}
         >
-          <ScrollSection id="bible-verse">
-            <div className="text-center">
+          <ScrollSection id="bible-verse" noWrapper={true} className="relative">
+            {/* Logo outside the box */}
+            <div className="logo-gold-texture mb-4 mx-auto"></div>
+
+            {/* Manually create the glass box here */}
+            <div className="bg-amber-950/20 border border-amber-300/20 rounded-3xl shadow-2xl max-w-4xl w-full p-8 md:p-12 text-center">
               <p className="text-2xl md:text-3xl font-light text-shadow-romantic text-amber-100 mb-4 italic">
                 "Therefore what God has joined together, let no one separate."
               </p>
@@ -687,8 +697,9 @@ export default function WeddingRSVPWebsite() {
                 Mark 10:9
               </p>
             </div>
-            {/* Chevron scroll down animation - POSITION ADJUSTED HERE */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-30 md:bottom-32 z-20">
+
+            {/* Chevron scroll down animation */}
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-10 z-20">
               <div className="chevron-container">
                 <div className="chevron"></div>
                 <div className="chevron"></div>
@@ -696,6 +707,7 @@ export default function WeddingRSVPWebsite() {
               </div>
             </div>
           </ScrollSection>
+
           <ScrollSection id="introduction">
             <div className="text-center">
               <p className="text-xl md:text-2xl leading-relaxed max-w-3xl mx-auto font-light text-amber-200">

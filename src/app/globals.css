@@ -25,6 +25,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.logo-gold-texture {
+  background-image: url('/Logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .chevron-container {
   position: relative;
   width: 3.6rem;
