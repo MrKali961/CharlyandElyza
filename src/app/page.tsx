@@ -684,9 +684,9 @@ export default function WeddingRSVPWebsite() {
             ref={mainContentRef}
             className={`relative transition-opacity duration-1000 ${hasStarted ? 'opacity-100' : 'opacity-0'}`}
         >
-          <ScrollSection id="bible-verse" noWrapper={true} className="relative">
+          <ScrollSection id="bible-verse" noWrapper={true} className="relative pt-1 md:pt-1">
             {/* Logo outside the box */}
-            <div className="logo-gold-texture mb-4 mx-auto"></div>
+            <div className="logo-gold-texture mb-8 mx-auto mt-6"></div>
 
             {/* Manually create the glass box here */}
             <div className="bg-amber-950/20 border border-amber-300/20 rounded-3xl shadow-2xl max-w-4xl w-full p-8 md:p-12 text-center">
@@ -699,7 +699,7 @@ export default function WeddingRSVPWebsite() {
             </div>
 
             {/* Chevron scroll down animation */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-10 z-20">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-25 z-20">
               <div className="chevron-container">
                 <div className="chevron"></div>
                 <div className="chevron"></div>
@@ -985,3 +985,4 @@ export default function WeddingRSVPWebsite() {
       </div>
   );
 }
+
