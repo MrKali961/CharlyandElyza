@@ -686,11 +686,13 @@ export default function WeddingRSVPWebsite() {
                 Mark 10:9
               </p>
             </div>
-            <div className="mt-10 w-24 mx-auto text-white">
-              <p className="text-center  ">Scroll down</p>
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
+            {/* Chevron scroll down animation */}
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-20">
+              <div className="chevron-container">
+                <div className="chevron"></div>
+                <div className="chevron"></div>
+                <div className="chevron"></div>
+              </div>
             </div>
           </ScrollSection>
           <ScrollSection id="introduction">
