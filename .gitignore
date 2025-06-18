@@ -1,0 +1,24 @@
+# System Files
+desktop.ini
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Next.js
+.next/
+out/
+build/
+
+# Dependencies
+node_modules/
+
+# Env files
+.env*
+!/.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
