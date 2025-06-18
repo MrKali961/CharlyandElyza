@@ -667,6 +667,7 @@ export default function WeddingRSVPWebsite() {
         >
           {!isInitialLoading && isVideoReady && !hasStarted && (
               <div className="text-center animate-fadeInUp pointer-events-none">
+                <div className="logo-gold-texture mb-4"></div>
                 <p className="mt-8 text-lg font-light opacity-80 text-amber-200">
                   {typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'Click anywhere to continue' : 'Touch anywhere to start'}
                 </p>
@@ -687,7 +688,7 @@ export default function WeddingRSVPWebsite() {
               </p>
             </div>
             {/* Chevron scroll down animation */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-20">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 md:bottom-16 z-20">
               <div className="chevron-container">
                 <div className="chevron"></div>
                 <div className="chevron"></div>
@@ -972,3 +973,4 @@ export default function WeddingRSVPWebsite() {
       </div>
   );
 }
+

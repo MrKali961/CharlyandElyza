@@ -109,3 +109,20 @@ body {
     transform: translateY(7.2rem) scale(0.5); /* Adjusted for size */
   }
 }
+
+.logo-gold-texture {
+  background-image: url('/goldtext.jpeg');
+  background-size: cover;
+  background-position: center;
+  mask-image: url('/Logo.png');
+  -webkit-mask-image: url('/Logo.png');
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  width: 200px;
+  height: 200px;
+  display: inline-block;
+}
