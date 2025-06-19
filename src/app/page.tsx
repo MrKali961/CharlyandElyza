@@ -699,7 +699,8 @@ export default function WeddingRSVPWebsite() {
             </div>
 
             {/* Chevron scroll down animation */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-25 z-20">
+            <div className="absolute left-[50%] -translate-x-1/2 bottom-20 z-20 flex flex-col items-center text-gold-texture">
+              <p className="mb-2 text-center">Scroll Down</p>
               <div className="chevron-container">
                 <div className="chevron"></div>
                 <div className="chevron"></div>
