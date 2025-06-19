@@ -712,7 +712,7 @@ export default function WeddingRSVPWebsite() {
           <ScrollSection id="introduction">
             <div className="text-center">
               <p className="text-xl md:text-2xl leading-relaxed max-w-3xl mx-auto font-light text-amber-200">
-                Mr. Ramez Nassif and Mr. Youssef Geitany alongside their families are thrilled to invite you to the
+                Mr Ramez & Mrs Bernadette Nassif and Mr Youssef & Mrs Liliane Geitany alongside their families are honoured to invite you to the
                 wedding of their beloved children,
               </p>
               <div className="mb-8">
