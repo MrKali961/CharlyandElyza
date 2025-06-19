@@ -986,4 +986,3 @@ export default function WeddingRSVPWebsite() {
       </div>
   );
 }
-

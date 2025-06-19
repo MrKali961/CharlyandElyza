@@ -1,3 +1,4 @@
+
 @import "tailwindcss";
 
 :root {
@@ -143,4 +144,14 @@ body {
   width: 200px;
   height: 200px;
   display: inline-block;
+}
+
+.text-gold-texture {
+  background-image: url('/goldtext.jpeg');
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
