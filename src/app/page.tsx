@@ -770,7 +770,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">6:30 PM - Ceremony</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">7:00 PM - Ceremony</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Exchange of vows in the church courtyard</p>
                 </div>
@@ -779,7 +779,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">7:30 PM - Welcome drink</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">8:00 PM - Welcome drink</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Celebrating with cocktails and canapés</p>
                 </div>
@@ -789,7 +789,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">8:15 PM - Reception</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">8:45 PM - Reception</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Dinner, dancing, and memories</p>
                 </div>
@@ -986,3 +986,4 @@ export default function WeddingRSVPWebsite() {
       </div>
   );
 }
+
