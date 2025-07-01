@@ -9,6 +9,10 @@ export async function POST(req: NextRequest) {
     // Destructure the message from the request body
     const { name, attending, guests, phonenumber, message } = body;
 
+    if (!name || typeof name !== 'string') {
+      return NextResponse.json({ error: 'Guest name is required.' }, { status: 400 });
+    }
+
     // --- Authentication with Google Sheets ---
     // The credentials are store in environment variables for security.
     const auth = new google.auth.GoogleAuth({
@@ -35,7 +39,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not find any data in the sheet.' }, { status: 500 });
     }
 
-    const rowIndex = rows.findIndex(row => row[0] === name);
+    const rowIndex = rows.findIndex(row => row && row[0] && row[0].trim().toLowerCase() === name.trim().toLowerCase());
 
     if (rowIndex === -1) {
       return NextResponse.json({ error: 'Guest not found.' }, { status: 404 });

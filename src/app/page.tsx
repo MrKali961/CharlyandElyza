@@ -161,6 +161,7 @@ export default function WeddingRSVPWebsite() {
   const [showPlayButton, setShowPlayButton] = useState(false);
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [guestList, setGuestList] = useState<{ name: string; guests: number | null }[]>([]);
+  const [guestListLoaded, setGuestListLoaded] = useState(false);
   const [name, setName] = useState('');
   const [suggestions, setSuggestions] = useState<{ name: string; guests: number | null }[]>([]);
   const [selectedGuest, setSelectedGuest] = useState<{ name: string; guests: number | null } | null>(null);
@@ -177,15 +178,6 @@ export default function WeddingRSVPWebsite() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
-
-  // Fetch guest list from the mock API on component mount
-  useEffect(() => {
-    const loadGuestList = async () => {
-      const list = await fetchGuestList();
-      setGuestList(list);
-    };
-    loadGuestList();
-  }, []);
 
   // Handle name input changes and provide suggestions
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -611,6 +603,14 @@ export default function WeddingRSVPWebsite() {
     };
   }, []);
 
+  const handleNameFocus = async () => {
+    if (!guestListLoaded) {
+      const list = await fetchGuestList();
+      setGuestList(list);
+      setGuestListLoaded(true);
+    }
+  };
+
   if (isLoading) {
     return (
         <div
@@ -770,7 +770,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">6:30 PM - Ceremony</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">7:00 PM - Ceremony</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Exchange of vows in the church courtyard</p>
                 </div>
@@ -779,7 +779,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">7:30 PM - Welcome drink</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">8:00 PM - Welcome drink</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Celebrating with cocktails and canapés</p>
                 </div>
@@ -789,7 +789,7 @@ export default function WeddingRSVPWebsite() {
                     <div className="text-amber-300">
                       <TimeIcon />
                     </div>
-                    <span className="ml-3 text-xl font-semibold text-amber-100">8:15 PM - Reception</span>
+                    <span className="ml-3 text-xl font-semibold text-amber-100">8:45 PM - Reception</span>
                   </div>
                   <p className="ml-9 opacity-90 text-amber-200">Dinner, dancing, and memories</p>
                 </div>
@@ -832,6 +832,7 @@ export default function WeddingRSVPWebsite() {
                         name="name"
                         value={name}
                         onChange={handleNameChange}
+                        onFocus={handleNameFocus}
                         required
                         className="w-full px-4 py-3 rounded-xl glass-effect border border-amber-300/30 focus:border-amber-300/60 focus:outline-none text-gold-texture placeholder-yellow-600 bg-amber-950/20"
                         placeholder="Your full name"
