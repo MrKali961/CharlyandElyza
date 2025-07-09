@@ -716,7 +716,7 @@ export default function WeddingRSVPWebsite() {
                   </div>
                   <h3 className="text-2xl font-semibold mb-3 text-amber-100">Date & Time</h3>
                   <p className="text-lg text-amber-50">Saturday, July 19th, 2025</p>
-                  <p className="text-lg text-amber-50">6:30 PM Ceremony</p>
+                  <p className="text-lg text-amber-50">7:00 PM Ceremony</p>
                   <p className="text-sm opacity-80 mt-2 text-amber-200">Reception to follow</p>
                 </div>
 
